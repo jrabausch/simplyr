@@ -108,7 +108,6 @@ var Player = /** @class */ (function () {
         this.controls.setCurrentTime(this.audioElement.currentTime);
     };
     Player.prototype.onLoadedmetadata = function (e) {
-        console.log(e);
         this.controls.setCurrentTime(0);
         this.controls.setDuration(this.audioElement.duration);
     };

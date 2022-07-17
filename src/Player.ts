@@ -42,7 +42,6 @@ class Player {
 	}
 
 	protected onLoadedmetadata(e: Event) { 
-		console.log(e);
 		this.controls.setCurrentTime(0);
 		this.controls.setDuration(this.audioElement.duration);
 	}

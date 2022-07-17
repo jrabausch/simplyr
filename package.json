@@ -1,0 +1,31 @@
+{
+  "name": "@jrabausch/simplyr",
+  "version": "1.0.0",
+  "description": "Simple typed audio player.",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm run build:dist & npm run build:dist:min",
+    "build:dist": "browserify -p [ tsify ] src/index.ts > dist/simplyr.js",
+    "build:dist:min": "browserify -p [ tsify ] -t [ uglifyify ] src/index.ts > dist/simplyr.min.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jrabausch/simplyr.git"
+  },
+  "keywords": [
+    "typescript",
+    "audio",
+    "player"
+  ],
+  "author": "Johannes Rabausch",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jrabausch/simplyr/issues"
+  },
+  "homepage": "https://github.com/jrabausch/simplyr#readme",
+  "devDependencies": {
+    "browserify": "^17.0.0",
+    "tsify": "^5.0.4",
+    "uglifyify": "^5.0.2"
+  }
+}

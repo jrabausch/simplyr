@@ -66,6 +66,15 @@
 	</div>
 
 	<script src="../dist/simplyr.js"></script>
+	<script>
+
+		const player = new Simplyer.Player(document.body);
+		const controls = new Simplyer.Controls(document.body);
+
+		document.querySelectorAll('.playpause').forEach((el) => {
+			new Simplyer.Track(el);
+		});
+	</script>
 </body>
 
 </html>

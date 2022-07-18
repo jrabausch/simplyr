@@ -1,35 +1,31 @@
-import Controls from './Controls';
-import PlayPauseEvent from './PlayPauseEvent';
+import { AudioLoadedEvent, PlayingEvent, PausedEvent, PlayPauseEvent, TimeUpdateEvent, TimeSeekEvent } from './events';
 
 class Player {
 
-	protected audioElement: HTMLAudioElement;
+	protected audio: HTMLAudioElement;
 	protected currentTarget: EventTarget | null = null;
-	protected controls: Controls;
 
-	constructor() {
+	constructor(root: EventTarget) {
 
-		this.audioElement = document.createElement('audio');
-		this.audioElement.preload = 'metadata';
-		this.audioElement.addEventListener('timeupdate', this.onTimeupdate.bind(this));
-		this.audioElement.addEventListener('loadedmetadata', this.onLoadedmetadata.bind(this));
-		this.audioElement.addEventListener('ended', this.onEnded.bind(this));
+		this.audio = new Audio();
+		this.audio.preload = 'metadata';
 
-		document.documentElement.addEventListener(PlayPauseEvent.type, this.onPlayPause.bind(this), true);
+		this.audio.addEventListener('timeupdate', this.onTimeUpdate.bind(this));
+		this.audio.addEventListener('loadedmetadata', this.onLoadedMetadata.bind(this));
+		this.audio.addEventListener('ended', this.onEnded.bind(this));
 
-		this.controls = new Controls(this);
+		root.addEventListener('play-pause', this.onPlayPause.bind(this));
+		root.addEventListener('time-seek', this.onTimeSeek.bind(this));
 	}
 
 	protected onPlayPause(e: Event) {
 
-		const event = e as PlayPauseEvent;
-		const target = event.target;
+		const target = e.target;
 
-		if (this.currentTarget !== target) {
+		if (target !== this.currentTarget) {
 
-			const audio = event.detail.audio;
-
-			this.loadAudio(audio);
+			this.pause();
+			this.loadAudioSrc((e as PlayPauseEvent).detail.audio);
 
 			this.currentTarget = target;
 		}
@@ -37,22 +33,29 @@ class Player {
 		this.togglePlay();
 	}
 
-	protected onTimeupdate(e: Event) {
-		this.controls.setCurrentTime(this.audioElement.currentTime);
+	protected onTimeSeek(e: Event) {
+		this.seek((e as TimeSeekEvent).detail.position);
 	}
 
-	protected onLoadedmetadata(e: Event) { 
-		this.controls.setCurrentTime(0);
-		this.controls.setDuration(this.audioElement.duration);
+	protected onTimeUpdate(e: Event) {
+		this.currentTarget?.dispatchEvent(new TimeUpdateEvent({
+			currentTime: this.audio.currentTime
+		}));
+	}
+
+	protected onLoadedMetadata(e: Event) {
+		this.currentTarget?.dispatchEvent(new AudioLoadedEvent({
+			duration: this.audio.duration
+		}));
 	}
 
 	protected isPlaying(): boolean {
-		return !this.audioElement.paused;
+		return !this.audio.paused;
 	}
 
 	protected onEnded(e: Event) {
 		this.pause();
-		this.audioElement.currentTime = 0;
+		this.audio.currentTime = 0;
 	}
 
 	protected togglePlay() {
@@ -64,34 +67,27 @@ class Player {
 		}
 	}
 
-	protected loadAudio(resource: string) {
-		this.pause();
-		this.audioElement.src = resource;
-		this.audioElement.load();
-	}
-
-	protected setTargetPlaying(flag: boolean) {
-		if (this.currentTarget) {
-			(this.currentTarget as HTMLElement).dataset.playing = (flag ? 'true' : 'false');
-		}
+	protected loadAudioSrc(resource: string) {
+		this.audio.src = resource;
+		this.audio.load();
 	}
 
 	play() {
-		this.audioElement.play();
-		this.setTargetPlaying(true);
+		this.audio.play();
+		this.currentTarget?.dispatchEvent(new PlayingEvent());
 	}
 
 	pause() {
-		this.audioElement.pause();
-		this.setTargetPlaying(false);
+		this.audio.pause();
+		this.currentTarget?.dispatchEvent(new PausedEvent())
 	}
 
-	jumpTo(offset: number) {
-		this.audioElement.currentTime = offset;
+	seek(offset: number) {
+		this.audio.currentTime = offset;
 	}
 
-	seek(delta: number) {
-		this.audioElement.currentTime += delta;
+	jump(delta: number) {
+		this.audio.currentTime += delta;
 	}
 }
 

@@ -1,199 +1,234 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var Controls = /** @class */ (function () {
-    function Controls(player) {
+const events_1 = require("./events");
+class Controls {
+    constructor(root) {
+        this.currentTarget = null;
         this.dragging = false;
-        this.player = player;
         this.rangeElement = document.querySelector('input[type="range"]');
         this.timeElement = document.querySelector('.timeline .time');
         this.durationElement = document.querySelector('.timeline .duration');
         this.rangeElement.addEventListener('change', this.rangeChange.bind(this));
         this.rangeElement.addEventListener('input', this.rangeInput.bind(this));
+        root.addEventListener('audio-loaded', this.onAudioLoaded.bind(this));
+        root.addEventListener('time-update', this.onTimeUpdate.bind(this));
     }
-    Controls.prototype.rangeChange = function () {
+    onAudioLoaded(e) {
+        this.setDuration(e.detail.duration);
+        this.currentTarget = e.target;
+    }
+    onTimeUpdate(e) {
+        this.setCurrentTime(e.detail.currentTime);
+    }
+    rangeChange() {
+        var _a;
         this.dragging = false;
-        var value = parseInt(this.rangeElement.value, 10);
-        this.player.jumpTo(value);
-    };
-    Controls.prototype.rangeInput = function () {
+        const position = parseInt(this.rangeElement.value, 10);
+        (_a = this.currentTarget) === null || _a === void 0 ? void 0 : _a.dispatchEvent(new events_1.TimeSeekEvent({ position }));
+    }
+    rangeInput() {
         this.dragging = true;
-        var value = parseInt(this.rangeElement.value, 10);
-        this.timeElement.innerHTML = this.htmlTime(value);
-    };
-    Controls.prototype.htmlTime = function (seconds) {
-        var hour = Math.floor(seconds / 3600);
-        var min = Math.floor((seconds - hour * 3600) / 60);
-        var sec = Math.floor(seconds - hour * 3600 - min * 60);
+        const value = parseInt(this.rangeElement.value, 10);
+        this.timeElement.innerHTML = this.timeString(value);
+    }
+    timeString(seconds) {
+        const hour = Math.floor(seconds / 3600);
+        const min = Math.floor((seconds - hour * 3600) / 60);
+        const sec = Math.floor(seconds - hour * 3600 - min * 60);
         return min + ':' + (sec < 10 ? '0' + sec : sec);
-    };
-    Controls.prototype.setCurrentTime = function (time) {
+    }
+    setCurrentTime(time) {
         if (!this.dragging) {
             this.rangeElement.value = time.toString();
-            this.timeElement.innerHTML = this.htmlTime(time);
+            this.timeElement.innerHTML = this.timeString(time);
         }
-    };
-    Controls.prototype.setDuration = function (duration) {
+    }
+    setDuration(duration) {
         this.rangeElement.max = duration.toString();
-        this.durationElement.innerHTML = this.htmlTime(duration);
-    };
-    return Controls;
-}());
+        this.durationElement.innerHTML = this.timeString(duration);
+    }
+}
 exports.default = Controls;
 
-},{}],2:[function(require,module,exports){
-"use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-var PlayPauseEvent = /** @class */ (function (_super) {
-    __extends(PlayPauseEvent, _super);
-    function PlayPauseEvent() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    PlayPauseEvent.create = function (title, sub, audio) {
-        return new CustomEvent(PlayPauseEvent.type, {
-            detail: {
-                title: title,
-                sub: sub,
-                audio: audio
-            }
-        });
-    };
-    PlayPauseEvent.type = 'play-pause';
-    return PlayPauseEvent;
-}(CustomEvent));
-exports.default = PlayPauseEvent;
-
-},{}],3:[function(require,module,exports){
+},{"./events":4}],2:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var Controls_1 = require("./Controls");
-var PlayPauseEvent_1 = require("./PlayPauseEvent");
-var Player = /** @class */ (function () {
-    function Player() {
+const events_1 = require("./events");
+class Player {
+    constructor(root) {
         this.currentTarget = null;
-        this.audioElement = document.createElement('audio');
-        this.audioElement.preload = 'metadata';
-        this.audioElement.addEventListener('timeupdate', this.onTimeupdate.bind(this));
-        this.audioElement.addEventListener('loadedmetadata', this.onLoadedmetadata.bind(this));
-        this.audioElement.addEventListener('ended', this.onEnded.bind(this));
-        document.documentElement.addEventListener(PlayPauseEvent_1.default.type, this.onPlayPause.bind(this), true);
-        this.controls = new Controls_1.default(this);
+        this.audio = new Audio();
+        this.audio.preload = 'metadata';
+        this.audio.addEventListener('timeupdate', this.onTimeUpdate.bind(this));
+        this.audio.addEventListener('loadedmetadata', this.onLoadedMetadata.bind(this));
+        this.audio.addEventListener('ended', this.onEnded.bind(this));
+        root.addEventListener('play-pause', this.onPlayPause.bind(this));
+        root.addEventListener('time-seek', this.onTimeSeek.bind(this));
     }
-    Player.prototype.onPlayPause = function (e) {
-        var event = e;
-        var target = event.target;
-        if (this.currentTarget !== target) {
-            var audio = event.detail.audio;
-            this.loadAudio(audio);
+    onPlayPause(e) {
+        const target = e.target;
+        if (target !== this.currentTarget) {
+            this.pause();
+            this.loadAudioSrc(e.detail.audio);
             this.currentTarget = target;
         }
         this.togglePlay();
-    };
-    Player.prototype.onTimeupdate = function (e) {
-        this.controls.setCurrentTime(this.audioElement.currentTime);
-    };
-    Player.prototype.onLoadedmetadata = function (e) {
-        this.controls.setCurrentTime(0);
-        this.controls.setDuration(this.audioElement.duration);
-    };
-    Player.prototype.isPlaying = function () {
-        return !this.audioElement.paused;
-    };
-    Player.prototype.onEnded = function (e) {
+    }
+    onTimeSeek(e) {
+        this.seek(e.detail.position);
+    }
+    onTimeUpdate(e) {
+        var _a;
+        (_a = this.currentTarget) === null || _a === void 0 ? void 0 : _a.dispatchEvent(new events_1.TimeUpdateEvent({
+            currentTime: this.audio.currentTime
+        }));
+    }
+    onLoadedMetadata(e) {
+        var _a;
+        (_a = this.currentTarget) === null || _a === void 0 ? void 0 : _a.dispatchEvent(new events_1.AudioLoadedEvent({
+            duration: this.audio.duration
+        }));
+    }
+    isPlaying() {
+        return !this.audio.paused;
+    }
+    onEnded(e) {
         this.pause();
-        this.audioElement.currentTime = 0;
-    };
-    Player.prototype.togglePlay = function () {
+        this.audio.currentTime = 0;
+    }
+    togglePlay() {
         if (this.isPlaying()) {
             this.pause();
         }
         else {
             this.play();
         }
-    };
-    Player.prototype.loadAudio = function (resource) {
-        this.pause();
-        this.audioElement.src = resource;
-        this.audioElement.load();
-    };
-    Player.prototype.setTargetPlaying = function (flag) {
-        if (this.currentTarget) {
-            this.currentTarget.dataset.playing = (flag ? 'true' : 'false');
-        }
-    };
-    Player.prototype.play = function () {
-        this.audioElement.play();
-        this.setTargetPlaying(true);
-    };
-    Player.prototype.pause = function () {
-        this.audioElement.pause();
-        this.setTargetPlaying(false);
-    };
-    Player.prototype.jumpTo = function (offset) {
-        this.audioElement.currentTime = offset;
-    };
-    Player.prototype.seek = function (delta) {
-        this.audioElement.currentTime += delta;
-    };
-    return Player;
-}());
+    }
+    loadAudioSrc(resource) {
+        this.audio.src = resource;
+        this.audio.load();
+    }
+    play() {
+        var _a;
+        this.audio.play();
+        (_a = this.currentTarget) === null || _a === void 0 ? void 0 : _a.dispatchEvent(new events_1.PlayingEvent());
+    }
+    pause() {
+        var _a;
+        this.audio.pause();
+        (_a = this.currentTarget) === null || _a === void 0 ? void 0 : _a.dispatchEvent(new events_1.PausedEvent());
+    }
+    seek(offset) {
+        this.audio.currentTime = offset;
+    }
+    jump(delta) {
+        this.audio.currentTime += delta;
+    }
+}
 exports.default = Player;
 
-},{"./Controls":1,"./PlayPauseEvent":2}],4:[function(require,module,exports){
+},{"./events":4}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var PlayPauseEvent_1 = require("./PlayPauseEvent");
-var Track = /** @class */ (function () {
-    function Track(element) {
+const events_1 = require("./events");
+class Track {
+    constructor(element) {
         this.element = element;
         this.element.addEventListener('click', this.onClick.bind(this));
+        this.element.addEventListener('playing', this.onPlaying.bind(this));
+        this.element.addEventListener('paused', this.onPaused.bind(this));
     }
-    Track.prototype.onClick = function (e) {
-        var title = this.element.dataset.title || '';
-        var sub = this.element.dataset.sub || '';
-        var audio = this.element.dataset.audio || '';
-        var event = PlayPauseEvent_1.default.create(title, sub, audio);
+    onClick(e) {
+        const title = this.element.dataset.title || '';
+        const sub = this.element.dataset.sub || '';
+        const audio = this.element.dataset.audio || '';
+        const event = new events_1.PlayPauseEvent({ title, sub, audio });
         this.element.blur();
         this.element.dispatchEvent(event);
-    };
-    return Track;
-}());
+    }
+    onPlaying() {
+        this.element.dataset.playing = 'true';
+    }
+    onPaused() {
+        this.element.dataset.playing = 'false';
+    }
+}
 exports.default = Track;
 
-},{"./PlayPauseEvent":2}],5:[function(require,module,exports){
+},{"./events":4}],4:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createTrack = exports.createPlayer = void 0;
-var Player_1 = require("./Player");
-var Track_1 = require("./Track");
-var createPlayer = function () {
-    return new Player_1.default();
-};
-exports.createPlayer = createPlayer;
-var createTrack = function (element) {
-    return new Track_1.default(element);
-};
-exports.createTrack = createTrack;
-(function () {
-    var player = (0, exports.createPlayer)();
-    document.querySelectorAll('.playpause').forEach(function (el) {
-        (0, exports.createTrack)(el);
-    });
-})();
+exports.TimeSeekEvent = exports.TimeUpdateEvent = exports.AudioLoadedEvent = exports.PausedEvent = exports.PlayingEvent = exports.PlayPauseEvent = void 0;
+class PlayPauseEvent extends CustomEvent {
+    constructor(detail) {
+        super('play-pause', {
+            bubbles: true,
+            detail
+        });
+    }
+}
+exports.PlayPauseEvent = PlayPauseEvent;
+;
+class PlayingEvent extends CustomEvent {
+    constructor() {
+        super('playing', {
+            bubbles: false
+        });
+    }
+}
+exports.PlayingEvent = PlayingEvent;
+;
+class PausedEvent extends CustomEvent {
+    constructor() {
+        super('paused', {
+            bubbles: false
+        });
+    }
+}
+exports.PausedEvent = PausedEvent;
+;
+class AudioLoadedEvent extends CustomEvent {
+    constructor(detail) {
+        super('audio-loaded', {
+            bubbles: true,
+            detail
+        });
+    }
+}
+exports.AudioLoadedEvent = AudioLoadedEvent;
+;
+class TimeUpdateEvent extends CustomEvent {
+    constructor(detail) {
+        super('time-update', {
+            bubbles: true,
+            detail
+        });
+    }
+}
+exports.TimeUpdateEvent = TimeUpdateEvent;
+;
+class TimeSeekEvent extends CustomEvent {
+    constructor(detail) {
+        super('time-seek', {
+            bubbles: true,
+            detail
+        });
+    }
+}
+exports.TimeSeekEvent = TimeSeekEvent;
+;
 
-},{"./Player":3,"./Track":4}]},{},[5]);
+},{}],5:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const Controls_1 = require("./Controls");
+const Player_1 = require("./Player");
+const Track_1 = require("./Track");
+window.Simplyer = {
+    Player: Player_1.default,
+    Track: Track_1.default,
+    Controls: Controls_1.default
+};
+
+},{"./Controls":1,"./Player":2,"./Track":3}]},{},[5]);

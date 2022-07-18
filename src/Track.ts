@@ -1,4 +1,4 @@
-import PlayPauseEvent from './PlayPauseEvent';
+import { PlayPauseEvent } from './events';
 
 class Track {
 
@@ -8,6 +8,8 @@ class Track {
 
 		this.element = element;
 		this.element.addEventListener('click', this.onClick.bind(this));
+		this.element.addEventListener('playing', this.onPlaying.bind(this));
+		this.element.addEventListener('paused', this.onPaused.bind(this));
 	}
 
 	protected onClick(e: MouseEvent) {
@@ -16,10 +18,18 @@ class Track {
 		const sub = this.element.dataset.sub || '';
 		const audio = this.element.dataset.audio || '';
 
-		const event = PlayPauseEvent.create(title, sub, audio);
+		const event = new PlayPauseEvent({ title, sub, audio });
 
 		this.element.blur();
 		this.element.dispatchEvent(event);
+	}
+
+	protected onPlaying() {
+		this.element.dataset.playing = 'true';
+	}
+
+	protected onPaused() {
+		this.element.dataset.playing = 'false';
 	}
 }
 

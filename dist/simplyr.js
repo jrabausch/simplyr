@@ -225,7 +225,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Controls_1 = require("./Controls");
 const Player_1 = require("./Player");
 const Track_1 = require("./Track");
-window.Simplyer = {
+window.Simplyr = {
     Player: Player_1.default,
     Track: Track_1.default,
     Controls: Controls_1.default

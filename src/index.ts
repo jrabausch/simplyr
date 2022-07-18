@@ -4,7 +4,7 @@ import Track from './Track';
 
 declare let window: any;
 
-window.Simplyer = {
+window.Simplyr = {
 	Player,
 	Track,
 	Controls

@@ -1,7 +1,5 @@
 export type PlayPauseDetail = {
-	title: string;
-	sub: string;
-	audio: string;
+	audio?: string;
 };
 
 export class PlayPauseEvent extends CustomEvent<PlayPauseDetail> {
@@ -17,7 +15,7 @@ export class PlayingEvent extends CustomEvent<any>
 {
 	constructor() {
 		super('playing', {
-			bubbles: false
+			bubbles: true
 		});
 	}
 };
@@ -26,7 +24,7 @@ export class PausedEvent extends CustomEvent<any>
 {
 	constructor() {
 		super('paused', {
-			bubbles: false
+			bubbles: true
 		});
 	}
 };

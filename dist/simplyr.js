@@ -6,15 +6,34 @@ class Controls {
     constructor(root) {
         this.currentTarget = null;
         this.dragging = false;
-        this.rangeElement = document.querySelector('input[type="range"]');
-        this.timeElement = document.querySelector('.timeline .time');
-        this.durationElement = document.querySelector('.timeline .duration');
+        this.rangeElement = document.createElement('input');
+        this.rangeElement.type = 'range';
+        this.rangeElement.min = '0';
+        this.rangeElement.max = '0';
+        this.rangeElement.step = '1';
+        this.timeElement = document.createElement('div');
+        this.timeElement.className = 'time';
+        this.timeElement.innerHTML = '0:00';
+        this.durationElement = document.createElement('div');
+        this.durationElement.className = 'duration';
+        this.durationElement.innerHTML = '0:00';
         this.rangeElement.addEventListener('change', this.rangeChange.bind(this));
         this.rangeElement.addEventListener('input', this.rangeInput.bind(this));
         root.addEventListener('audio-loaded', this.onAudioLoaded.bind(this));
         root.addEventListener('time-update', this.onTimeUpdate.bind(this));
     }
+    getHtml() {
+        const fragment = new DocumentFragment();
+        fragment.appendChild(this.timeElement);
+        const track = document.createElement('div');
+        track.className = 'track';
+        track.appendChild(this.rangeElement);
+        fragment.appendChild(track);
+        fragment.appendChild(this.durationElement);
+        return fragment;
+    }
     onAudioLoaded(e) {
+        this.setCurrentTime(0);
         this.setDuration(e.detail.duration);
         this.currentTarget = e.target;
     }
@@ -51,7 +70,36 @@ class Controls {
 }
 exports.default = Controls;
 
-},{"./events":4}],2:[function(require,module,exports){
+},{"./events":5}],2:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const events_1 = require("./events");
+class PlayPause {
+    constructor(root, element) {
+        this.currentTarget = null;
+        this.element = element;
+        this.element.addEventListener('click', this.onClick.bind(this));
+        root.addEventListener('audio-loaded', this.onAudioLoaded.bind(this));
+        root.addEventListener('playing', this.onPlaying.bind(this));
+        root.addEventListener('paused', this.onPaused.bind(this));
+    }
+    onClick(e) {
+        var _a;
+        (_a = this.currentTarget) === null || _a === void 0 ? void 0 : _a.dispatchEvent(new events_1.PlayPauseEvent({}));
+    }
+    onAudioLoaded(e) {
+        this.currentTarget = e.target;
+    }
+    onPlaying() {
+        this.element.dataset.playing = 'true';
+    }
+    onPaused() {
+        this.element.dataset.playing = 'false';
+    }
+}
+exports.default = PlayPause;
+
+},{"./events":5}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const events_1 = require("./events");
@@ -70,7 +118,8 @@ class Player {
         const target = e.target;
         if (target !== this.currentTarget) {
             this.pause();
-            this.loadAudioSrc(e.detail.audio);
+            const audio = e.detail.audio;
+            audio && this.load(audio);
             this.currentTarget = target;
         }
         this.togglePlay();
@@ -105,8 +154,8 @@ class Player {
             this.play();
         }
     }
-    loadAudioSrc(resource) {
-        this.audio.src = resource;
+    load(src) {
+        this.audio.src = src;
         this.audio.load();
     }
     play() {
@@ -128,7 +177,7 @@ class Player {
 }
 exports.default = Player;
 
-},{"./events":4}],3:[function(require,module,exports){
+},{"./events":5}],4:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const events_1 = require("./events");
@@ -140,11 +189,8 @@ class Track {
         this.element.addEventListener('paused', this.onPaused.bind(this));
     }
     onClick(e) {
-        const title = this.element.dataset.title || '';
-        const sub = this.element.dataset.sub || '';
-        const audio = this.element.dataset.audio || '';
-        const event = new events_1.PlayPauseEvent({ title, sub, audio });
-        this.element.blur();
+        const audio = this.element.dataset.audio;
+        const event = new events_1.PlayPauseEvent({ audio });
         this.element.dispatchEvent(event);
     }
     onPlaying() {
@@ -156,7 +202,7 @@ class Track {
 }
 exports.default = Track;
 
-},{"./events":4}],4:[function(require,module,exports){
+},{"./events":5}],5:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TimeSeekEvent = exports.TimeUpdateEvent = exports.AudioLoadedEvent = exports.PausedEvent = exports.PlayingEvent = exports.PlayPauseEvent = void 0;
@@ -173,7 +219,7 @@ exports.PlayPauseEvent = PlayPauseEvent;
 class PlayingEvent extends CustomEvent {
     constructor() {
         super('playing', {
-            bubbles: false
+            bubbles: true
         });
     }
 }
@@ -182,7 +228,7 @@ exports.PlayingEvent = PlayingEvent;
 class PausedEvent extends CustomEvent {
     constructor() {
         super('paused', {
-            bubbles: false
+            bubbles: true
         });
     }
 }
@@ -219,16 +265,18 @@ class TimeSeekEvent extends CustomEvent {
 exports.TimeSeekEvent = TimeSeekEvent;
 ;
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const Controls_1 = require("./Controls");
 const Player_1 = require("./Player");
 const Track_1 = require("./Track");
+const PlayPause_1 = require("./PlayPause");
 window.Simplyr = {
     Player: Player_1.default,
     Track: Track_1.default,
-    Controls: Controls_1.default
+    Controls: Controls_1.default,
+    PlayPause: PlayPause_1.default
 };
 
-},{"./Controls":1,"./Player":2,"./Track":3}]},{},[5]);
+},{"./Controls":1,"./PlayPause":2,"./Player":3,"./Track":4}]},{},[6]);

@@ -25,8 +25,8 @@ class Player {
 		if (target !== this.currentTarget) {
 
 			this.pause();
-			this.loadAudioSrc((e as PlayPauseEvent).detail.audio);
-
+			const audio = (e as PlayPauseEvent).detail.audio;
+			audio && this.load(audio);
 			this.currentTarget = target;
 		}
 
@@ -67,26 +67,26 @@ class Player {
 		}
 	}
 
-	protected loadAudioSrc(resource: string) {
-		this.audio.src = resource;
+	protected load(src: string) {
+		this.audio.src = src;
 		this.audio.load();
 	}
 
-	play() {
+	protected play() {
 		this.audio.play();
 		this.currentTarget?.dispatchEvent(new PlayingEvent());
 	}
 
-	pause() {
+	protected pause() {
 		this.audio.pause();
 		this.currentTarget?.dispatchEvent(new PausedEvent())
 	}
 
-	seek(offset: number) {
+	protected seek(offset: number) {
 		this.audio.currentTime = offset;
 	}
 
-	jump(delta: number) {
+	protected jump(delta: number) {
 		this.audio.currentTime += delta;
 	}
 }

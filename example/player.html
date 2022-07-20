@@ -24,8 +24,7 @@
 						</div>
 						<div>
 							<div class="playpause"
-								data-audio="https://d1s1y0ui543e5o.cloudfront.net/tracks/5423/preview/hreqv.mp3"
-								data-title="Lazy Bones" data-sub="vital"></div>
+								data-audio="https://d1s1y0ui543e5o.cloudfront.net/tracks/5423/preview/hreqv.mp3"></div>
 						</div>
 					</li>
 					<li>
@@ -35,8 +34,7 @@
 						</div>
 						<div>
 							<div class="playpause"
-								data-audio="https://d1s1y0ui543e5o.cloudfront.net/tracks/4231/preview/3320.mp3"
-								data-title="Sweet Heat" data-sub="Decibel"></div>
+								data-audio="https://d1s1y0ui543e5o.cloudfront.net/tracks/4231/preview/3320.mp3"></div>
 						</div>
 					</li>
 					<li>
@@ -46,8 +44,7 @@
 						</div>
 						<div>
 							<div class="playpause"
-								data-audio="https://d1s1y0ui543e5o.cloudfront.net/tracks/3474/preview/2354.mp3"
-								data-title="Cozy Cafe" data-sub="AHOAMI"></div>
+								data-audio="https://d1s1y0ui543e5o.cloudfront.net/tracks/3474/preview/2354.mp3"></div>
 						</div>
 					</li>
 				</ol>
@@ -56,22 +53,21 @@
 	</div>
 
 	<div class="player">
-		<div class="timeline">
-			<div class="time">0:00</div>
-			<div class="track">
-				<input type="range" min="0" max="0" step="1">
-			</div>
-			<div class="duration">0:00</div>
-		</div>
+		<div class="playpause"></div>
+		<div class="timeline"></div>
 	</div>
 
 	<script src="../dist/simplyr.js"></script>
 	<script>
 
-		const player = new Simplyr.Player(document.body);
+		new Simplyr.Player(document.body);
 		const controls = new Simplyr.Controls(document.body);
 
-		document.querySelectorAll('.playpause').forEach((el) => {
+		document.querySelector('.timeline').appendChild(controls.getHtml());
+
+		new Simplyr.PlayPause(document.body, document.querySelector('.player .playpause'));
+
+		document.querySelectorAll('.playlist .playpause').forEach((el) => {
 			new Simplyr.Track(el);
 		});
 	</script>

@@ -14,13 +14,9 @@ class Track {
 
 	protected onClick(e: MouseEvent) {
 
-		const title = this.element.dataset.title || '';
-		const sub = this.element.dataset.sub || '';
-		const audio = this.element.dataset.audio || '';
+		const audio = this.element.dataset.audio;
+		const event = new PlayPauseEvent({ audio });
 
-		const event = new PlayPauseEvent({ title, sub, audio });
-
-		this.element.blur();
 		this.element.dispatchEvent(event);
 	}
 

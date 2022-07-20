@@ -10,9 +10,19 @@ class Controls {
 
 	constructor(root: EventTarget) {
 
-		this.rangeElement = document.querySelector('input[type="range"]') as HTMLInputElement;
-		this.timeElement = document.querySelector('.timeline .time') as HTMLElement;
-		this.durationElement = document.querySelector('.timeline .duration') as HTMLElement;
+		this.rangeElement = document.createElement('input') as HTMLInputElement;
+		this.rangeElement.type = 'range';
+		this.rangeElement.min = '0';
+		this.rangeElement.max = '0';
+		this.rangeElement.step = '1';
+
+		this.timeElement = document.createElement('div');
+		this.timeElement.className = 'time';
+		this.timeElement.innerHTML = '0:00';
+
+		this.durationElement = document.createElement('div');
+		this.durationElement.className = 'duration';
+		this.durationElement.innerHTML = '0:00';
 
 		this.rangeElement.addEventListener('change', this.rangeChange.bind(this));
 		this.rangeElement.addEventListener('input', this.rangeInput.bind(this));
@@ -21,7 +31,19 @@ class Controls {
 		root.addEventListener('time-update', this.onTimeUpdate.bind(this));
 	}
 
+	getHtml(): DocumentFragment {
+		const fragment = new DocumentFragment();
+		fragment.appendChild(this.timeElement);
+		const track = document.createElement('div');
+		track.className = 'track';
+		track.appendChild(this.rangeElement);
+		fragment.appendChild(track);
+		fragment.appendChild(this.durationElement);
+		return fragment;
+	}
+
 	protected onAudioLoaded(e: Event) {
+		this.setCurrentTime(0);
 		this.setDuration((e as AudioLoadedEvent).detail.duration);
 		this.currentTarget = e.target;
 	}
